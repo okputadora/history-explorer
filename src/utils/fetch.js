@@ -8,7 +8,7 @@ export const getPersonData = async (name) => {
   // const results = await axios.get(WIKI_BASE_PATH + encodeURI(getPersonQuery(name)))
   // const formattedResults = formatFamilyTree(results);
   const children = await axios.get(WIKI_BASE_PATH + encodeURI(getChildren(name)))
-  console.log({children})
+  console.log({children: children.data.results.bindings})
   // process results
   // return formattedResults;
 }
@@ -52,10 +52,37 @@ export const getChildren = name => BASE_QUERY + `
     ?person rdfs:label ?name.
     ?person dbo:parent ?parent.
     ?person dbr:father ?father
-    ?father rdfs:label "${name}
-    ?parent rdfs:label "${name}"@en.
+    { ?father rdfs:label "${name}"@en } UNION
+    { ?parent rdfs:label "${name}"@en }
     FILTER (!bound(?name) || langMatches( lang(?name), "EN" ))
   } 
+`
+
+const getParentsAndChildren = name => BASE_QUERY + `
+  SELECT ?person ?relationship ?relative WHERE {
+  # Substitute 'Person_Name' with the person's name of interest
+  ?person rdfs:label "${name}"@en .
+  
+  # Fetch person's parents
+  { ?person dbo:parent ?relative . BIND("Parent" AS ?relationship) }
+  UNION
+  # Fetch person's children
+  { ?relative dbo:parent ?person . BIND("Child" AS ?relationship) }
+}
+`
+
+const getParents = name => BASE_QUERY + `
+  SELECT ?person ?relationship ?relative WHERE {
+  # Substitute 'Person_Name' with the person's name of interest
+  ?person rdfs:label "${name}"@en .
+  
+  # Fetch person's parents
+  ?person dbo:parent ?relative . BIND("Parent" AS ?relationship) 
+}
+`
+
+const getPersonByParentName = name => BASE_QUERY + `
+
 `
 
 const formatFamilyTree = (personData) => {
@@ -137,7 +164,7 @@ UNION
 
 const fatherTest = ` SELECT DISTINCT ?person ?name ?father
   WHERE {   
-    ?person a dbo:Person.   
+    ?person a dbo:Person.    
     ?person rdfs:label ?name.
 FILTER (!bound(?name) || langMatches( lang(?name), "EN" ))
   ?person dbo:father ?father.
