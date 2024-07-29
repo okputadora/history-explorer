@@ -44,7 +44,7 @@ function App() {
       height,
       callbacks: {
         nodeClick: showNodeExpandOptions,
-        nodeRenderer,
+        // nodeRenderer,
         nodeHeightSeperation: (nodeWidth, nodeMaxHeight) => nodeMaxHeight * 3
         // nodeSize,
         // @TODO overwrite nodeSize callback
@@ -86,14 +86,9 @@ function App() {
       <PersonNode selected={id === currentSelectedId} isFocused={extra.isFocused} className={nodeClass} data={{ name, height, width }} onClick={() => console.log('CLICKED HANDLED HERE')} />,
     );
   };
-  console.log({currentPeople})
   const showNodeExpandOptions = (name, extra, id) => {
-    console.log({name, extra, id})
     const parents = expandParents(extra)
-    console.log({parents})
-    console.log({currentPeople})
     const result = createTreeFromList([...parents, ...dataRef.current])
-    console.log({result})
     setCurrentSelectedId(id);
   };
   return (

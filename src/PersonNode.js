@@ -10,7 +10,8 @@ export const PersonNode = ({ data, onClick, isFocused, ...rest }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: isFocused ? 'yellow !important' : 'blue'
+        background: isFocused ? 'yellow !important' : 'blue',
+        boxSizing: 'border-box'
       }}
       onClick={onClick}
     >

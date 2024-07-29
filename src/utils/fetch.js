@@ -8,6 +8,7 @@ export const getPersonData = async (name) => {
   const spousesAndParents = await axios.get(WIKI_BASE_PATH + encodeURI(getSpousesAndParents(name)));
   const people = formatPersonNode(spousesAndParents.data.results.bindings);
   const children = await axios.get(WIKI_BASE_PATH + encodeURI(getPersonByParentName(name)))
+  console.log({children})
   const formattedChildren = formatChildrenNodes(children)
   console.log({people, formattedChildren})
   const tree = createTreeFromList([...people, ...formattedChildren])
@@ -127,17 +128,30 @@ const getSpousesAndParents = (name) =>
 `;
 
 const getPersonByParentName = (name) =>
-  BASE_QUERY +
-  `
-  SELECT ?person ?parent ?name
+  BASE_QUERY + `
+  SELECT ?person ?parent ?originalParent ?name
   WHERE {
     ?person a dbo:Person .
-    ?person dbo:parent ?parent .
-    ?person rdfs:label ?name
-    FILTER (!bound(?name) || langMatches( lang(?name), "EN" ))
-    { ?parent dbo:wikiPageRedirects/dbo:wikiPageRedirects* dbr:${replaceSpaces(name)} } 
-    UNION 
-    { ?person dbo:parent <http://dbpedia.org/resource/${replaceSpaces(name)}> . }
+    ?person dbo:parent ?originalParent .
+    
+    {
+      SELECT ?person ?name
+      WHERE {
+        ?person dbo:parent ?potentialParent .
+        { ?potentialParent dbo:wikiPageRedirects dbr:${replaceSpaces(name)} . }
+        UNION 
+        { ?person dbo:parent dbr:${replaceSpaces(name)} . }  
+        ?person rdfs:label ?name.
+        FILTER (langMatches(lang(?name), "EN"))
+      }
+    }
+    BIND(
+      IF(
+        EXISTS { ?originalParent dbo:wikiPageRedirects dbr:Henry_VIII },
+        dbr:Henry_VIII,
+        ?originalParent
+      ) AS ?parent
+    )
   }
 `;
 
@@ -384,3 +398,31 @@ FILTER (!bound(?name) || langMatches( lang(?name), "EN" ))
 
 
 }`;
+
+
+const parentResolveViaRedirects = `
+SELECT ?person ?resolvedParent ?originalParent ?name
+WHERE {
+  ?person a dbo:Person .
+  ?person dbo:parent ?originalParent .
+  
+  {
+    SELECT ?person ?name
+    WHERE {
+      ?person dbo:parent ?potentialParent .
+      { ?potentialParent dbo:wikiPageRedirects dbr:Henry_VIII . }
+      UNION 
+      { ?person dbo:parent dbr:Henry_VIII . }  
+      ?person rdfs:label ?name.
+      FILTER (langMatches(lang(?name), "EN"))
+    }
+  }
+  BIND(
+    IF(
+      EXISTS { ?originalParent dbo:wikiPageRedirects dbr:Henry_VIII },
+      dbr:Henry_VIII,
+      ?originalParent
+    ) AS ?resolvedParent
+  )
+}
+  `
