@@ -10,6 +10,7 @@
     "axios": "^1.7.2",
     "d3": "^4.12.2",
     "d3-dtree": "^2.4.1",
+    "dtree-seed": "^1.0.0",
     "lodash": "^4.17.21",
     "react": "^18.3.1",
     "react-d3-library": "^1.1.8",
@@ -41,5 +42,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
   }
 }
